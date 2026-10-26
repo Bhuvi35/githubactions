@@ -15,4 +15,19 @@ jobs:
 
       -  name: Check Git version
          run: git --version
+       
 
+  test:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Test
+        run: echo "Testing application"
+
+  deploy:
+    needs: Test
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy
+        run: echo "Deploying application" 
