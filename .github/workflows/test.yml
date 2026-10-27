@@ -1,0 +1,129 @@
+
+# 1. Workflow name
+name: Complete GitHub Actions Practice
+
+# 2. Control overlapping runs
+concurrency:
+  group: practice-${{ github.ref }}
+  cancel-in-progress: false
+
+# 3. Triggers: when should this workflow run?
+on:
+  push:
+    branches:
+      - main
+      - 'feature/**'
+
+  pull_request:
+    branches:
+      - main
+
+  workflow_dispatch:
+
+# 4. Permissions available to the workflow
+permissions:
+  contents: read
+
+# 5. Environment variables
+env:
+  APP_NAME: devops-practice
+  APP_ENV: learning
+
+# 6. Jobs
+jobs:
+
+  # JOB 1: Prepare
+  prepare:
+    name: Prepare and inspect
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    outputs:
+      commit_sha: ${{ steps.metadata.outputs.commit_sha }}
+
+    steps:
+      # Reusable action: check out the repository
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Use a shell command
+      - name: Display basic information
+        run: |
+          echo "Application: $APP_NAME"
+          echo "Environment: $APP_ENV"
+          echo "Branch: $GITHUB_REF"
+
+      # Give a step an ID so other steps can read its output
+      - name: Create commit metadata
+        id: metadata
+        run: |
+          echo "commit_sha=$GITHUB_SHA" >> "$GITHUB_OUTPUT"
+
+      # Deliberately fail this step to practise error handling
+      - name: Practise continue-on-error
+        continue-on-error: true
+        run: exit 1
+
+      - name: Continue after the test failure
+        if: always()
+        run: echo "The workflow continues after the allowed failure"
+
+      # Save a file so another job can download it
+      - name: Create practice artifact
+        run: |
+          echo "Application=$APP_NAME" > practice-info.txt
+          echo "Commit=$GITHUB_SHA" >> practice-info.txt
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: practice-info
+          path: practice-info.txt
+          retention-days: 1
+
+  # JOB 2: Test multiple configurations
+  test:
+    name: Test on ${{ matrix.os }}
+    needs: prepare
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 5
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - ubuntu-24.04
+
+    steps:
+      - name: Show commit from prepare job
+        run: echo "Commit is ${{ needs.prepare.outputs.commit_sha }}"
+
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: practice-info
+
+      - name: Read artifact
+        run: cat practice-info.txt
+
+      - name: Conditional step
+        if: runner.os == 'Linux'
+        run: echo "This step runs on Linux"
+
+  # JOB 3: Simulated deployment
+  deploy:
+    name: Simulated deployment
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    # Run this job only for main branch pushes
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: Simulate deployment
+        run: |
+          echo "Application: $APP_NAME"
+          echo "Deploying to a practice environment"
+          echo "No real deployment is performed"
