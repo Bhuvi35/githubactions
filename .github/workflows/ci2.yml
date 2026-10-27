@@ -1,0 +1,35 @@
+
+name: GitHub Actions Variables Practice
+
+on:
+  push:
+    branches:
+      - feature/first-github-action
+  workflow_dispatch:
+
+env:
+  APP_NAME: devops-practice
+  APP_ENV: learning
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Display application details
+        run: |
+          echo "Application: $APP_NAME"
+          echo "Environment: $APP_ENV"
+
+      - name: Display GitHub context
+        run: |
+          echo "Repository: $GITHUB_REPOSITORY"
+          echo "Commit: $GITHUB_SHA"
+          echo "Actor: $GITHUB_ACTOR"
+
+      - name: Conditional execution
+        if: github.ref == 'refs/heads/feature/first-github-action'
+        run: echo "Running on our practice branch"
