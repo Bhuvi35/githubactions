@@ -1,0 +1,39 @@
+name: Docker build practice
+
+on:
+  push:
+    branches:
+      - 'feature/**'
+  
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  
+jobs:
+  docker-build:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build Docker Image
+        uses: docker/build-push-action@v4
+
+        with:
+          context:
+          file: ./Dockerfile
+          push: false
+          tags: devops-practice:latest
+      
+      - name: Build completed
+        run: echo "Docker image build completed successfully"
+      
+      
