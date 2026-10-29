@@ -15,20 +15,29 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    outputs:
+      app_version: ${{ steps.version.outputs.app_version }}
+
+    
+
     steps:
-      - name: Build
-        run: echo "Building application"
+      - name: Generate application version
+        id: version
+        run: echo "app_version=1.0.0" >> "GITHUB_OUTPUT"
+      
+      - name: Display generated version
+        run: echo "Built version 1.0.0"
 
   test:
     needs: build
     runs-on: ubuntu-latest
     steps:
-    - name: Test
-      run: echo "Testing application"
+    - name: Read version from build job
+      run: echo "Testing  ersion ${{ needs.build.outputs.app_version}}" 
 
   deploy:
     needs: test
     runs-on: ubuntu-latest
     steps:
      - name: Deploy
-       run: echo "Deploy application"
+       run: echo "Deploying version ${{ needs.build.outputs.app_version}}"
